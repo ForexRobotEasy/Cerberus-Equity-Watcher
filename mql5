@@ -1,0 +1,67 @@
+//+------------------------------------------------------------------+
+//|                                      Cerberus Equity Watcher     |
+//|               Copyright 2021, ForexRobotEasy.com                 |
+//|       https://forexroboteasy.com/forex-robot-review/review-cap-zone-recovery-ea-pro-mt5-turn-losing-trades-into-winning-trades/|
+//+------------------------------------------------------------------+
+#include <Trade\Trade.mqh>
+
+input double MaxEquity = 10000;     // Maximum equity threshold
+input double MinEquity = 5000;      // Minimum equity threshold
+
+CTrade trade;
+
+//+------------------------------------------------------------------+
+//| Expert initialization function                                   |
+//+------------------------------------------------------------------+
+int OnInit()
+  {
+   // Initialization of Cerberus Equity Watcher
+   return(INIT_SUCCEEDED);
+  }
+
+//+------------------------------------------------------------------+
+//| Expert tick function                                             |
+//+------------------------------------------------------------------+
+void OnTick()
+  {
+   // Main trading logic
+   double accountEquity = AccountInfoDouble(ACCOUNT_EQUITY);
+
+   // Check if equity is below the minimum threshold or above the maximum
+   if(accountEquity <= MinEquity || accountEquity >= MaxEquity)
+     {
+      // Flatten all positions and stop all EAs
+      FlattenAllPositions();
+      Alert("Cerberus Equity Watcher has flattened all positions due to equity limits.");
+     }
+  }
+
+//+------------------------------------------------------------------+
+//| Function to close all positions                                  |
+//+------------------------------------------------------------------+
+void FlattenAllPositions()
+  {
+   // Close all open positions
+   for(int i = PositionsTotal() - 1; i >= 0; i--)
+     {
+      ulong ticket = PositionGetTicket(i);
+      if(PositionSelectByTicket(ticket))
+        {
+         if(PositionGetType(ticket) == POSITION_TYPE_BUY)
+           trade.PositionClose(ticket);
+         else if(PositionGetType(ticket) == POSITION_TYPE_SELL)
+           trade.PositionClose(ticket);
+        }
+     }
+
+   // Cancel all pending orders
+   for(int j = OrdersTotal() - 1; j >= 0; j--)
+     {
+      ulong orderTicket = OrderGetTicket(j);
+      trade.OrderDelete(orderTicket);
+     }
+  }
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
